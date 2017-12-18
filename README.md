@@ -27,4 +27,4 @@ $ cp ~/.m2/repository/commons-lang/commons-lang/2.6/commons-lang-2.6.jar $JMETER
 $ cp ~/.m2/repository/ru/nev/chat-jmeter/0.0.1-SNAPSHOT/chat-jmeter-0.0.1-SNAPSHOT-jar-with-dependencies.jar $JMETER_HOME/lib/ext/
 ```
 
-- Run `stress-test.jmx`
+- Run `chat-jmeter/stress-test.jmx`
