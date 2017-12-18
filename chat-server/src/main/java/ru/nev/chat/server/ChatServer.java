@@ -3,6 +3,7 @@ package ru.nev.chat.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.nev.chat.AbstractChatComponent;
+import ru.nev.chat.commands.*;
 import ru.nev.chat.converter.MessageConverter;
 import ru.nev.chat.converter.OutputMessage;
 import ru.nev.chat.domain.ServerUser;
@@ -22,10 +23,12 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.AbstractSelectableChannel;
 import java.nio.channels.spi.AbstractSelector;
 import java.nio.channels.spi.SelectorProvider;
+import java.util.List;
 import java.util.Objects;
 
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static java.nio.channels.SelectionKey.OP_READ;
+import static ru.nev.chat.messages.User.SERVER;
 
 public class ChatServer extends AbstractChatComponent {
 
@@ -34,6 +37,7 @@ public class ChatServer extends AbstractChatComponent {
   private final ByteBuffer welcomeBuf;
   private final UserRepository userRepository;
   private final MessageRepository messageRepository;
+  private final CommandParser<Cmd<List<TextMessage>>> parser;
 
   public ChatServer(int port, MessageConverter<Message> converter,
                     UserRepository userRepository, MessageRepository messageRepository) throws IOException {
@@ -41,6 +45,11 @@ public class ChatServer extends AbstractChatComponent {
     this.userRepository = userRepository;
     this.messageRepository = messageRepository;
     this.welcomeBuf = makeByteBuffer(new NotAuthenticatedMessage("Welcome to Chat! What is your name?"));
+
+    parser = new CommandParser<>();
+    parser
+      .add(new ChatCommand<>("help", "show help", new HelpFn(parser)))
+      .add(new ChatCommand<>("users", "number of connected users", new UsersFn(this)));
   }
 
   @Override
@@ -114,8 +123,21 @@ public class ChatServer extends AbstractChatComponent {
 
       String text = textMessage.getText();
       if (serverUser.hasName()) {
-        broadcastAsUser(text, sender);
-        messageRepository.add(textMessage);
+        if (text.startsWith("/")) {
+          Cmd<List<TextMessage>> cmd = parser.parse(text);
+          if (cmd != null) {
+            List<TextMessage> messages = cmd.execute();
+            for (TextMessage msg : messages) {
+              msg.setUser(SERVER);
+              sendToUser(sender, msg);
+            }
+          } else {
+            sendToUser(sender, new TextMessage(SERVER, "Unknown command " + text));
+          }
+        } else {
+          broadcastAsUser(text, sender);
+          messageRepository.add(textMessage);
+        }
       } else {
         authenticate(sender, serverUser, text);
       }
@@ -143,6 +165,7 @@ public class ChatServer extends AbstractChatComponent {
       serverUser.setName(name);
 
       sendToUser(key, new NameChangedMessage(name));
+      sendToUser(key, new TextMessage(SERVER, "Type /help for the help"));
       broadcast(new UserJoinedMessage(name), key);
 
       for (TextMessage tm : messageRepository.getLastMessages()) {
@@ -203,4 +226,7 @@ public class ChatServer extends AbstractChatComponent {
     return ByteBuffer.wrap(byteArrayOutputStream.toByteArray());
   }
 
+  public int getNumberOfConnectedUsers() {
+    return selector.keys().size() - 1;
+  }
 }
