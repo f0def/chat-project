@@ -6,13 +6,13 @@ import java.util.List;
 
 public class HelpFn implements Fn<String, Cmd<List<TextMessage>>> {
 
-  private final CommandParser<Cmd<List<TextMessage>>> parser;
+  private final HelpCmd helpCmd;
 
   public HelpFn(CommandParser<Cmd<List<TextMessage>>> parser) {
-    this.parser = parser;
+    this.helpCmd = new HelpCmd(parser);
   }
 
   public Cmd<List<TextMessage>> apply(String option) {
-    return new HelpCmd(parser);
+    return helpCmd;
   }
 }
