@@ -1,22 +1,23 @@
 package ru.nev.chat.commands;
 
+import ru.nev.chat.messages.Message;
 import ru.nev.chat.messages.TextMessage;
-import ru.nev.chat.server.ChatServer;
+import ru.nev.chat.repository.SessionRepository;
 
 import java.util.List;
 
 import static java.util.Collections.singletonList;
 
-public class UsersCmd implements Cmd<List<TextMessage>> {
+public class UsersCmd implements Cmd<List<Message>> {
 
-  private final ChatServer chatServer;
+  private final SessionRepository sessionRepository;
 
-  public UsersCmd(ChatServer chatServer) {
-    this.chatServer = chatServer;
+  public UsersCmd(SessionRepository sessionRepository) {
+    this.sessionRepository = sessionRepository;
   }
 
   @Override
-  public List<TextMessage> execute() {
-    return singletonList(new TextMessage("Number of connected users: " + chatServer.getNumberOfConnectedUsers()));
+  public List<Message> execute() {
+    return singletonList(new TextMessage("Number of connected users: " + sessionRepository.getSessionCount()));
   }
 }

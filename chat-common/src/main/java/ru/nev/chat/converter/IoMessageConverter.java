@@ -19,6 +19,15 @@ public class IoMessageConverter implements MessageConverter<Message> {
   }
 
   @Override
+  public Message read(TypeReference<? extends Message> ref, InputMessage inputMessage) throws IOException {
+    try {
+      return (Message) new ObjectInputStream(inputMessage.getBody()).readObject();
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
   public void write(Message message, OutputMessage outputMessage) throws IOException {
     //TODO refactor to non-blocking! use header with object size
     //new ObjectOutputStream(outputMessage.getBody()).writeObject(message);

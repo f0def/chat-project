@@ -1,12 +1,24 @@
 package ru.nev.chat.server.cli;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import ru.nev.chat.converter.MessageConverter;
 import ru.nev.chat.converter.MessageConverterFactory;
+import ru.nev.chat.messages.Message;
 import ru.nev.chat.repository.MessageRepository;
-import ru.nev.chat.repository.UserRepository;
+import ru.nev.chat.repository.SessionRepository;
 import ru.nev.chat.server.ChatServer;
+import ru.nev.chat.transport.MessageProcessQueueHandler;
+import ru.nev.chat.transport.MessageTransportFactory;
+import ru.nev.chat.transport.SocketServerTransport;
 
 import java.io.IOException;
+import java.nio.channels.SelectionKey;
 
 public class Server {
 
@@ -41,8 +53,19 @@ public class Server {
       return;
     }
 
-    ChatServer chatServer = new ChatServer(port.intValue(), MessageConverterFactory.INSTANCE.make(),
-      UserRepository.make(), MessageRepository.make());
+    start(port.intValue());
+  }
+
+  private static void start(int port) {
+    MessageConverter<Message> converter = MessageConverterFactory.INSTANCE.make();
+    SocketServerTransport<Message> transport = MessageTransportFactory.socketServer(port, converter);
+
+    SessionRepository sessionRepository = SessionRepository.make();
+    MessageProcessQueueHandler<SelectionKey> readQueueHandler = new MessageProcessQueueHandler<>(8,
+      transport, MessageRepository.make(), sessionRepository);
+    readQueueHandler.start();
+
+    ChatServer chatServer = new ChatServer<>(transport, readQueueHandler, sessionRepository);
     chatServer.start();
   }
 }

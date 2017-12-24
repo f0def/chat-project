@@ -1,17 +1,16 @@
 package ru.nev.chat.repository;
 
-import ru.nev.chat.messages.TextMessage;
 import ru.nev.chat.repository.impl.InMemoryMessageRepository;
 
 import java.util.Queue;
 
-public interface MessageRepository {
+public interface MessageRepository<M> {
 
-  static MessageRepository make(){
-    return new InMemoryMessageRepository();
+  static <M> MessageRepository<M> make() {
+    return new InMemoryMessageRepository<>(100);
   }
 
-  void add(TextMessage textMessage);
+  void add(M message);
 
-  Queue<TextMessage> getLastMessages();
+  Queue<M> getLastMessages();
 }

@@ -1,22 +1,27 @@
 package ru.nev.chat.repository.impl;
 
 import com.google.common.collect.EvictingQueue;
-import ru.nev.chat.messages.TextMessage;
+import com.google.common.collect.Queues;
 import ru.nev.chat.repository.MessageRepository;
 
 import java.util.Queue;
 
-public class InMemoryMessageRepository implements MessageRepository {
+public class InMemoryMessageRepository<M> implements MessageRepository<M> {
 
-  private EvictingQueue<TextMessage> lastMessages = EvictingQueue.create(100);
+  private final Queue<M> lastMessages;
 
-  @Override
-  public synchronized void add(TextMessage textMessage) {
-    lastMessages.add(textMessage);
+  public InMemoryMessageRepository(int maxSize) {
+    EvictingQueue<M> q = EvictingQueue.create(maxSize);
+    this.lastMessages = Queues.synchronizedQueue(q);
   }
 
   @Override
-  public Queue<TextMessage> getLastMessages() {
+  public void add(M message) {
+    lastMessages.add(message);
+  }
+
+  @Override
+  public Queue<M> getLastMessages() {
     return lastMessages;
   }
 }

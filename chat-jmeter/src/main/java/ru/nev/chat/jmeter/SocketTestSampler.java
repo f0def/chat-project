@@ -6,10 +6,14 @@ import org.apache.jmeter.protocol.java.sampler.JavaSamplerContext;
 import org.apache.jmeter.samplers.SampleResult;
 import ru.nev.chat.client.ChatClient;
 import ru.nev.chat.client.ChatResponseHandler;
+import ru.nev.chat.converter.MessageConverter;
 import ru.nev.chat.converter.MessageConverterFactory;
+import ru.nev.chat.messages.Message;
 import ru.nev.chat.messages.NameChangedMessage;
 import ru.nev.chat.messages.NotAuthenticatedMessage;
 import ru.nev.chat.messages.TextMessage;
+import ru.nev.chat.transport.MessageTransportFactory;
+import ru.nev.chat.transport.SocketClientTransport;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -90,12 +94,15 @@ public class SocketTestSampler extends AbstractJavaSamplerClient implements Seri
       }
     };
 
-    chatClient[0] = new ChatClient(host, port, MessageConverterFactory.INSTANCE.make(), handler);
+    MessageConverter<Message> converter = MessageConverterFactory.INSTANCE.make();
+    SocketClientTransport<Message> transport = MessageTransportFactory.socketClient(host, port, converter);
+
+    chatClient[0] = new ChatClient<>(transport, handler);
     chatClient[0].start();
 
-    while (chatClient[0].isRunning()) {
-      Thread.sleep(10);
-    }
+//    while (chatClient[0].isRunning()) {
+//      Thread.sleep(10);
+//    }
   }
 
   private void authenticate(ChatClient chatClient) {

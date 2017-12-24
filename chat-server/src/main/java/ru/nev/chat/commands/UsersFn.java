@@ -1,19 +1,19 @@
 package ru.nev.chat.commands;
 
-import ru.nev.chat.messages.TextMessage;
-import ru.nev.chat.server.ChatServer;
+import ru.nev.chat.messages.Message;
+import ru.nev.chat.repository.SessionRepository;
 
 import java.util.List;
 
-public class UsersFn implements Fn<String, Cmd<List<TextMessage>>> {
+public class UsersFn implements Fn<String, Cmd<List<Message>>> {
 
   private final UsersCmd usersCmd;
 
-  public UsersFn(ChatServer chatServer) {
-    this.usersCmd = new UsersCmd(chatServer);
+  public UsersFn(SessionRepository sessionRepository) {
+    this.usersCmd = new UsersCmd(sessionRepository);
   }
 
-  public Cmd<List<TextMessage>> apply(String option) {
+  public Cmd<List<Message>> apply(String option) {
     return usersCmd;
   }
 }
